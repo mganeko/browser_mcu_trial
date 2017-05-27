@@ -1,0 +1,444 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>MCU for Sora</title>
+        <script src="js/sora.hack.js"></script>
+        <script src="js/browser_mcu.js"></script>
+    </head>
+    <body>
+        MCU for Sora.  Sora Server:
+        <input type="text" id="ws_url" size="48" value="" placeholder="PLEASE set Sora signaling URL" />
+        <button id="init_sora_button" onclick="initSora()">Initialize Sora Client</button>
+        <br />
+        <div>
+            <input type="checkbox" id="video" checked="checked" />
+            <label>video</label>
+            <select name="videoCodecType" id="videoCodecType">
+              <option value="VP8">VP8</option>
+              <option value="VP9">VP9</option>
+              <option value="H264">H.264</option>
+            </select>
+            <input type="checkbox" id="audio" checked="checked" />
+            <label>audio</label>
+            &nbsp;&nbsp;
+            <label>Channel ID:
+            <input id="channel_id" type="text" size="32" value="" placeholder="PLEASE set channel_id" />
+            </label>
+            <button id="connect_button" onclick="connectSourceChannel()">Connect</button>
+            <button id="disconnect_button" onclick="disconnectSourceChannel()">Disconnect</button>
+            <br />
+            <label>Mix Channel ID:
+            <input id="mix_channel_id" type="text" size="32" value="" placeholder="PLEASE set mixed channel_id" />
+            </label>
+            <button id="connect_mix_button" onclick="connectMixChannel()">Connect Mix</button>
+            <button id="disconnect_mix_button" onclick="disconnectMixChannel()">Disconnect Mix</button>
+        </div>
+        <p id="clientId"></p>
+        <canvas id="canvas_mix" width="640x" height="480px" style="border: 1px solid black;" ></canvas>
+        <br />
+        <div id="remote">
+        </div>
+        <script>
+            "use strict"
+
+            // ---- TODO ----
+            // (1) DONE: split MCU core from Sora sample
+            // (2) (sora-sdk clean extend)
+            // (3) provide Sora multistream sample
+            // --------------
+
+
+            let soraUrl = null;
+            let sora = null;
+            let srcChannelId = null;
+            let srcSubscriber = null;
+            let mixChannelId = null;
+            let mixPublisher = null;
+
+            let mcu = new BrowserMCU();
+
+            function initMcu() {
+                mcu.setCanvas(document.getElementById('canvas_mix'));
+                mcu.setContainer(document.getElementById('remote'));
+            }
+
+            // --- GUI control ---
+            function updateButtons() {
+                // -- before initialize --
+                if (! sora) {
+                    enabelElement('ws_url');
+                    enabelElement('init_sora_button');
+
+                    disableElement('video');
+                    disableElement('videoCodecType');
+                    disableElement('audio');
+                    disableElement('channel_id');
+                    disableElement('connect_button');
+                    disableElement('disconnect_button');
+                    disableElement('mix_channel_id');
+                    disableElement('connect_mix_button');
+                    disableElement('disconnect_mix_button');
+
+                    return;
+                }
+
+                // --- after initialize ---
+                disableElement('ws_url');
+                disableElement('init_sora_button');
+
+                if (! srcSubscriber) {
+                    // -- not Subscribig source channel yet --
+                    enabelElement('video');
+                    enabelElement('videoCodecType');
+                    enabelElement('audio');
+                    enabelElement('channel_id');
+                    enabelElement('connect_button');
+                    disableElement('disconnect_button');
+
+                    // --- cannot publish mix ---
+                    disableElement('mix_channel_id');
+                    disableElement('connect_mix_button');
+                    disableElement('disconnect_mix_button');
+                }
+                else {
+                    // -- already subscribing source channel --
+                    disableElement('video');
+                    disableElement('videoCodecType');
+                    disableElement('audio');
+                    disableElement('channel_id');
+                    disableElement('connect_button');
+                    enabelElement('disconnect_button');
+
+                    if (mixPublisher) {
+                        // --- already publishing mix channel ---
+                        disableElement('mix_channel_id');
+                        disableElement('connect_mix_button');
+                        enabelElement('disconnect_mix_button');
+                    }
+                    else {
+                        // --- not publishing mix channel yet ---
+                        enabelElement('mix_channel_id');
+                        enabelElement('connect_mix_button');
+                        disableElement('disconnect_mix_button');
+                    }
+                }
+            }
+
+            function enabelElement(id) {
+                let element = document.getElementById(id);
+                if (element) {
+                    element.removeAttribute('disabled');
+                }
+            }
+
+            function disableElement(id) {
+                let element = document.getElementById(id);
+                if (element) {
+                    element.setAttribute('disabled', '1');
+                }    
+            }
+
+            function setupUIparams() {
+                const soraUrlInput = document.getElementById('ws_url');
+                soraUrlInput.focus();
+                const url = loadSoraURL();
+                if (url) {
+                    soraUrlInput.value = url;
+                }
+
+                let channelId = getParamChannelId();
+                if (channelId === '') {
+                    channelId = loadSourceChannelId();
+                }
+                if (channelId) {
+                    const srcChannelInput = document.getElementById('channel_id');
+                    srcChannelInput.value = channelId;
+                }
+
+                let mixChannelId = getParamMixChannelId();
+                if ( (mixChannelId) && (mixChannelId !== '') ) {
+                    const mixChannelInput = document.getElementById('mix_channel_id');
+                    mixChannelInput.value = mixChannelId;
+                }
+            }
+
+
+            function getParamChannelId() {
+                const search = window.location.search;
+                const re = new RegExp('channel_id=([^&=]+)');
+                const results = re.exec(search);
+                let channel_id = '';
+                if (results) {
+                    channel_id = results[1];
+                }
+                return channel_id;
+            }
+
+            function getParamMixChannelId() {
+                const search = window.location.search;
+                const re = new RegExp('mix_id=([^&=]+)');
+                const results = re.exec(search);
+                let mix_id = '';
+                if (results) {
+                    mix_id = results[1];
+                }
+                return mix_id;
+            }
+
+            // ===== init =====
+            function initSora() {
+                if (sora) {
+                    sora = null;
+                }
+                
+                soraUrl = getSoraURL();
+                console.log('init Sora with url:' + soraUrl);
+                sora = Sora.connection(soraUrl);
+
+                saveSoraURL(soraUrl);
+                updateButtons();
+                document.getElementById('channel_id').focus();
+            }
+
+            function getSoraURL() {
+                const soraUrlInput = document.getElementById('ws_url');
+                const wsUrl = soraUrlInput.value;
+                return wsUrl;
+            }
+
+            function saveSoraURL(url) {
+                localStorage.setItem('sora_muc_sora_url', url);
+            }
+
+            function loadSoraURL() {
+                let url = localStorage.getItem('sora_muc_sora_url');
+                return url;
+            }
+
+            // ---- connect source channel ----
+            function connectSourceChannel() {
+                srcChannelId = getSourceChannelId();
+                console.log('subscribe Sora src channel:' + srcChannelId);
+                const metadata = null; //'mcu subscribe';
+
+                const codecSelect = document.getElementById('videoCodecType');
+                const videoCodec = codecSelect.options[codecSelect.selectedIndex].value;
+                let useAudio = false;
+                if (document.getElementById('audio').value) {
+                    useAudio = true;
+                }
+                const options = {
+                    audio: useAudio,
+                    video: true, videoCodecType: videoCodec,
+                    videoBitRate: 1000,
+                    role: 'downstream',
+                    multistream: true
+                };
+                console.log('subscribe options:', options);
+
+                srcSubscriber = sora.subscriber(srcChannelId, metadata, options);
+                srcSubscriber.on('addstream', function(event) {
+                    console.log('addstream--');
+                    mcu.addRemoteVideo(event.stream);
+                    let tracks = event.stream.getAudioTracks();
+                    if (tracks.length > 0) {
+                        mcu.addRemoteAudio(event.stream);
+                    }
+
+                    if ( isAutoConnectMix() && (! isMixConnected()) ) {
+                        connectMix();
+                    }
+                });
+                srcSubscriber.on('removestream', function(event) {
+                    console.log('removestream--');
+                    mcu.removeRemoteVideo(event.stream);
+                });
+                srcSubscriber.on('disconnect', function(err) {
+                    console.error('ERROR in subscriber disconnect event:', err);
+                });
+
+                // -- start video/audio mix --
+                mcu.startMix();
+
+                // -- connect as Subscriber --
+                srcSubscriber.connect()
+                .then(() => {
+                    console.log('subscriber connect() OK');
+                    // -- NOT USE anymore --
+                    // addRemoteVideo(stream);
+                })
+                .catch(err => {
+                    console.error('ERROR in subscriber connect:', err);
+                    srcSubscriber = null;
+
+                    updateButtons();
+                });
+
+                saveSourceChannelId(srcChannelId);
+
+                // -- mix channel id ---
+                let mixChannelId = getParamMixChannelId();
+                if (mixChannelId === '') {
+                    mixChannelId = srcChannelId + '_mix';
+                }
+                setMixChannelId(mixChannelId);
+
+                updateButtons();
+                document.getElementById('mix_channel_id').focus();
+            }
+
+            function getSourceChannelId() {
+                const srcChannelInput = document.getElementById('channel_id');
+                const channel = srcChannelInput.value;
+                return channel;                
+            }
+
+            function saveSourceChannelId(channel) {
+                localStorage.setItem('sora_muc_source_channel_id', channel);
+            }
+
+            function loadSourceChannelId() {
+                const channel = localStorage.getItem('sora_muc_source_channel_id');
+                return channel;
+            }
+
+            function disconnectSourceChannel() {
+                if (srcSubscriber) {
+                    srcSubscriber.disconnect()
+                    .then(() => {
+                        console.log('subscriber disconnect() OK')
+                        srcSubscriber = null;
+
+                        mcu.removeAllRemoteAudio();
+                        mcu.stopMix();
+                        mcu.removeAllRemoteVideoStream();
+                        // -- moved --  calcGridHorzVert();
+                        // -- moved --  clearMixCanvas();
+
+                        updateButtons();
+                    })
+                    .catch(err => {
+                        console.error('ERROR in subscriber disconnect:', err);
+                        srcSubscriber = null;
+                        updateButtons();
+                    });
+                }
+
+                updateButtons();
+            }
+
+            function connectMixChannel() {
+                mixChannelId = getMixChannelId();
+                console.log('publish Sora mix channel:' + mixChannelId);
+                const metadata = null; //'mcu publish';
+
+                const codecSelect = document.getElementById('videoCodecType');
+                const videoCodec = codecSelect.options[codecSelect.selectedIndex].value;
+                let useAudio = false;
+                if (document.getElementById('audio').value) {
+                    useAudio = true;
+                }
+                const options = {
+                    audio: useAudio,
+                    video: true, videoCodecType: videoCodec,
+                    videoBitRate: 800,
+                    role: 'upstream',
+                    multistream: false
+                };
+                console.log('publish options:', options);
+
+                mixPublisher = sora.publisher(mixChannelId, metadata, options);
+
+                // -- connect as publisher --
+                mixPublisher.connect(mcu.getMixStream())
+                .then((evt) => {
+                    console.log('publisher connect() OK:', evt);
+                    updateButtons();
+                })
+                .catch(err => {
+                    console.error('ERROR in publisher connect:', err);
+                    mixPublisher = null;
+                    updateButtons();
+                });
+
+                updateButtons();
+            }
+
+            function getMixChannelId() {
+                const mixChannelInput = document.getElementById('mix_channel_id');
+                const channel = mixChannelInput.value;
+                return channel;                
+            }
+
+            function setMixChannelId(channel) {
+                let mixChannelInput = document.getElementById('mix_channel_id');
+                mixChannelInput.value = channel;
+            }
+
+            function disconnectMixChannel() {
+                if (mixPublisher) {
+                    mixPublisher.disconnect()
+                    .then(() => {
+                        console.log('publisher disconnect() OK')
+                        mixPublisher = null;
+                        updateButtons();
+                    })
+                    .catch(err => {
+                        console.error('ERROR in publisher disconnect:', err);
+                        mixPublisher = null;
+                        updateButtons();
+                    });
+                }
+
+                updateButtons();
+            }
+
+
+            function isMixConnected() {
+                if (mixPublisher) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+
+
+            function isAutoConnect() {
+                var search = window.location.search;
+                var re = new RegExp('auto=([^&=]+)');
+                var results = re.exec(search);
+                var autoConnect = false;
+                if (results) {
+                    autoConnect = true;
+                }
+                return autoConnect;
+            }
+
+            function isAutoConnectMix() {
+                var search = window.location.search;
+                var re = new RegExp('automix=([^&=]+)');
+                var results = re.exec(search);
+                var autoConnectMix = false;
+                if (results) {
+                    autoConnectMix = true;
+                }
+                return autoConnectMix;
+            }
+
+
+            // ================= initilaise onload ========
+            initMcu();
+            setupUIparams();
+
+            // ---- auto connect ---
+            if (isAutoConnect()) {
+              connectSourceChannel();
+            }
+
+
+            // --- control GUI ---
+            updateButtons();
+        </script>
+    </body>
+</html>
