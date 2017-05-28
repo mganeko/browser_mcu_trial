@@ -1,6 +1,9 @@
 //
 // Browser MCU
 //
+// TODO
+//  (1) DONE: Provide All-mix audio mode
+//  (2) Provide Minus-one audio mode
 
 "use strict"
 
