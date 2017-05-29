@@ -10,7 +10,7 @@
 ## Confirmed Environment / 動作確認環境
 
 * Chrome  58.0.3029.110 (64-bit) for MacOS X
-* Firefox (not yet)
+* Firefox (not yet)
 
 
 ## Samples / サンプル
@@ -27,7 +27,7 @@
 
 * Prepare
   * Setup Sora server before using the sample
-  * Connect to same channel_id from multiple browsers with multistream mode
+  * Connect to same channel_id from multiple browsers with multistream mode
 * Open sora_mcu.html with Chrome/Firefox
 * Specify Sora signaling URL to [Sora Server:] (such as ws://myserver.com:3000/signaling )
 * Click [Initialize Sora Client] Button
@@ -36,11 +36,13 @@
 * Then, videos/audios are mixed
 * Specify another channel to [Mix Channel ID:] and click [Connect Mix] button, to publish mixed video/audio
 
+--
+
 * 事前準備
   * サンプル利用にはSoraサーバーが必要です
   * Soraサーバーの特定のチャネルIDに、multistreamモードで複数のブラウザで接続しておきます
 * Chrome/Firefoxブラウザで sora_mcu.html を開きます
-* [Sora Server:]にSoraサーバーのシグナリンングURLを入力します(ws://myserver.com:3000/signaling など)
+* [Sora Server:] にSoraサーバーのシグナリンングURLを入力します(ws://myserver.com:3000/signaling など)
 * [Initialize Sora Client]ボタンを押します
 * [Channel ID:]に、multisteramで接続しているチャネルIDを指定します
 * [Connect]ボタンを押します
