@@ -1,6 +1,8 @@
 //
 // Browser MCU
-//
+//   https://github.com/mganeko/browser_mcu
+//   browser_mcu is provided under MIT license
+// 
 // TODO
 //  (1) DONE: Provide All-mix audio mode
 //  (2) Provide Minus-one audio mode
