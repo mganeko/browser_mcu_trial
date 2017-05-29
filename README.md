@@ -29,7 +29,7 @@
   * Setup Sora server before using the sample
   * Connect to same channel_id from multiple browsers with multistream mode
 * Open sora_mcu.html with Chrome/Firefox
-* Specify Sora signaling URL to [Sora Server:] (such as ws://myserver.com:3000/signaling )
+* Specify Sora signaling URL to [Sora Server:], such as ws://myserver.com:3000/signaling
 * Click [Initialize Sora Client] Button
 * Specify the channel_id which connected with multistream above to [Channel ID:]
 * Click [Connect] Button
@@ -40,14 +40,14 @@
 
 * 事前準備
   * サンプル利用にはSoraサーバーが必要です
-  * Soraサーバーの特定のチャネルIDに、multistreamモードで複数のブラウザで接続しておきます
+  * Soraサーバーの特定のチャネルIDに、multistreamモードで複数のブラウザで接続しておきます
 * Chrome/Firefoxブラウザで sora_mcu.html を開きます
-* [Sora Server:] にSoraサーバーのシグナリンングURLを入力します(ws://myserver.com:3000/signaling など)
+* [Sora Server:] にSoraサーバーのシグナリンングURLを入力します(ws://myserver.com:3000/signaling など)
 * [Initialize Sora Client]ボタンを押します
 * [Channel ID:]に、multisteramで接続しているチャネルIDを指定します
 * [Connect]ボタンを押します
 * 映像/音声が合成されます
-* [Mix Channel ID:]を指定して[Connect Mix]ボタンを押すと、合成した映像/音声を指定したチャネルIDに配信することができます
+* [Mix Channel ID:]を指定して[Connect Mix]ボタンを押すと、合成した映像/音声を指定したチャネルIDに配信することができます
 
 ## Usage / 利用方法
 
