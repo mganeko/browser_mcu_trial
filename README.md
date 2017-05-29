@@ -18,8 +18,8 @@
 * [WebRTC SFU Sora](https://sora.shiguredo.jp/) sample / サンプル
   * view source on GitHub / ソースを見る
   * try GitHub pages / GitHub pages で試す
-* NOTE: You need Sora server to try. /  試すにはSoraサーバーが必要です 
-* [sora-js-sdk](https://github.com/shiguredo/sora-js-sdk) を改変して利用しています
+* NOTE: You need Sora server to try /  試すにはSoraサーバーが必要です
+* Using [sora-js-sdk](https://github.com/shiguredo/sora-js-sdk)  / [sora-js-sdk](https://github.com/shiguredo/sora-js-sdk) をコピーして利用しています
 
 
 ## Usage / 利用方法
@@ -47,7 +47,9 @@
 ## License / ライセンス
 
 * Browser_MCU is under the MIT license
-* THETA_GLはMITランセンスで提供されます
+* Using [sora.js](https://github.com/shiguredo/sora-js-sdk) under Apache License 2.0 
+* Browser_MCUはMITランセンスで提供されます
+* [sora.js](https://github.com/shiguredo/sora-js-sdk) は Apache License 2.0 で提供されているものを利用しています
 
 
 
