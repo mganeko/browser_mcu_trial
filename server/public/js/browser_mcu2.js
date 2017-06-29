@@ -469,7 +469,7 @@ var BrowserMCU = function() {
             }
 
             thisOutputNode = null;
-            delete minusOneOutputNodes[id];
+            delete minusOneOutputNodes[peerId];
         }
         else {
             console.warn('minusOneOutputNode NOT EXIST for peerId:' + peerId);

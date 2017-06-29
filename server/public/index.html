@@ -486,7 +486,7 @@
 
   function call() {
     console.log('calling ..');
-    sendJson({type: "call"});
+    broadcastJson({type: "call"});
   }
 
   /* --
@@ -521,6 +521,7 @@
       console.warn('peer NOT exist.');
     }
 
+    peerPartnerId = null;
     updateButtons();
   }
   

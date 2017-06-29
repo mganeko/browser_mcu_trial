@@ -16,11 +16,11 @@
 <body>
   browser_mcu meeting with websocket<br />
   <button id="connect_button"  onclick="connect();">Connect</button>
-  <button id="disconnect_button"  onclick="disconnect();">Disconnect</button> 
+  <button id="disconnect_button"  onclick="disconnect();">Disconnect</button>
+  <span id="state_span"></span>
   <div>
     mixed video<br />
     <canvas id="canvas_mix" width="640x" height="480px" style="border: 1px solid black;" ></canvas>
-    <span id="state_span"></span>
   </div>
   remote video<br />
   <div id="remote_container"></div>
@@ -37,7 +37,7 @@
   function initMcu() {
       mcu.setCanvas(canvasMix);
       mcu.setContainer(remoteContainer);
-      mcu.setAudioMode() = BrowserMCU.AUDIO_MODE_MINUS_ONE;
+      mcu.setAudioMode(BrowserMCU.AUDIO_MODE_MINUS_ONE);
   }
 
   // --- prefix -----
@@ -90,7 +90,7 @@
       return;
     }
 
-    Connetions[id] = peer;
+    Connections[id] = peer;
   }
 
   function removeConection(id) {
@@ -99,6 +99,9 @@
       return;
     }
 
+    let peer = Connections[id];
+    peer.close();
+    peer = null;
     delete Connections[id];
   }
 
@@ -111,6 +114,15 @@
     else {
       console.warn('NOT CONNECTED to id:' + id);
       return null;
+    }
+  }
+
+  function closeAllConnections() {
+    for (let id in Connections) {
+      let peer = Connections[id];
+      peer.close();
+      peer = null;
+      delete Connections[id];
     }
   }
 
@@ -131,12 +143,12 @@
     const fromId = message.from;
 
     if (message.type === 'call') {
-      if (isConencted(fromId)) {
+      if (isConnected(fromId)) {
         console.warn('ALREADY connecte, so ignore call');
         return;
       }
 
-      sendJson({ type: 'response'} );
+      sendJson(fromId, { type: 'response'} );
     }
     else if (message.type === 'response') {
       console.warn('got response, BUT MUST NOT recevie response.');
@@ -325,7 +337,7 @@
   function sendSdp(id, sessionDescription) {
     console.log('---sending sdp ---');
     const jsonSDP = sessionDescription.toJSON();
-    console.log('sending to:' + peerPartnerId + '  SDP:', jsonSDP);
+    console.log('sending to:' + id + '  SDP:', jsonSDP);
 
     sendJson(id, jsonSDP);
   }
@@ -333,7 +345,7 @@
   function sendIceCandidate(id, candidate) {
     console.log('---sending ICE candidate ---');
     const obj = { type: 'candidate', ice: candidate };
-    sendJson(obj);
+    sendJson(id, obj);
   }
 
   function sendJson(id, json) {
@@ -365,10 +377,15 @@
         console.log('-- peer.ontrack()');
         let stream = event.streams[0];
         logStream('remotestream of ontrack()', stream);
-        if ( (stream.getVideoTracks().length > 0) && (stream.getAudioTracks().length > 0) ) {
-          addRemoteVideo(stream.id, stream);
+        if (event.track.kind === "video") {
+          mcu.addRemoteVideo(stream);
         }
-        
+        else if (event.track.kind === "audio") {
+          mcu.addRemoteAudioMinusOne(id, stream);
+        }
+        else {
+          console.warn('UNKNOWN track kind:' + event.track.kind);
+        }
       };
     }
     else {
@@ -377,7 +394,14 @@
         let stream = event.stream;
         logStream('remotestream of onaddstream()', stream);
         
-        addRemoteVideo(stream.id, stream);
+        if (stream.getVideoTracks().length > 0) {
+          console.log('adding remote video');
+          mcu.addRemoteVideo(stream);
+        }
+        if (stream.getAudioTracks().length > 0) {
+          mcu.addRemoteAudioMinusOne(id, stream);
+          console.log('adding remote audio minus-one');
+        }
       };
     }
     // --- on get local ICE candidate
@@ -426,7 +450,9 @@
       }
       else if (peer.iceConnectionState === 'failed') {
         console.log('-- failed, so give up --');
-        disconnect();
+
+        console.warn('NOT IMPREMENTED YET. dissconect only this peer');
+        //disconnect();
       }
     };
     peer.onicegatheringstatechange = function() {
@@ -440,27 +466,38 @@
       console.log('-- peer.onremovestream()');
       let stream = event.stream;
       removeRemoteVideo(stream.id, stream);
+
+      if (stream.getVideoTracks().length > 0) {
+        console.log('removing remote video');
+        mcu.removeRemoteVideo(stream);
+      }
+      if (stream.getAudioTracks().length > 0) {
+        mcu.removeRemoteAudioMinusOne(id, stream);
+        console.log('removing remote audio minus-one');
+      }
     };
     
-    
-    // -- add local stream --
-    if (localStream) {
-      console.log('Adding local stream...');
+    // -- add mixed stream with minus one audio --
+    let stream = mcu.prepareMinusOneStream(id);
+    if (stream) {
+      console.log('Adding mix stream...');
       if ('addTrack' in peer) {
         console.log('use addTrack()');
         let tracks = localStream.getTracks();
         for (let track of tracks) {
-          let sender = peer.addTrack(track, localStream);
+          let sender = peer.addTrack(track, stream);
         }
       }
       else {
         console.log('use addStream()');
-        peer.addStream(localStream);
+        peer.addStream(stream);
       }
     }
     else {
-      console.warn('no local stream, but continue.');
+      console.warn('no mix stream, but continue.');
     }
+
+    addConnection(id, peer);
     return peer;
   }
 
@@ -573,14 +610,14 @@
   
   // start PeerConnection
   function connect() {
-    call(); // MUST BE REQUEST CALL
+    callMe(); // MUST BE REQUEST CALL
 
     updateButtons();
   }
 
-  function call() {
+  function callMe() {
     console.log('calling ..');
-    sendJson({type: "call"});
+    broadcastJson({type: "callme"});
   }
 
   /* --
@@ -605,7 +642,13 @@
     broadcastJson({type: "bye"});
     
     // ---- close all peers ---
+    removeAllConnections();
 
+    // --- remove all videos ---
+    mcu.removeAllRemoteVideoStream();
+
+    // --- remove all audio ---
+    mcu.removeAllRemoteAudioMinusOne();
 
     if (peerConnection) {
       console.log('Hang up.');
@@ -618,6 +661,7 @@
       console.warn('peer NOT exist.');
     }
 
+    mcu.stopMix();
     updateButtons();
   }
   
@@ -645,6 +689,7 @@
     }
   }
  
+  /*--
   function addRemoteVideo(id, stream) {
     let element = document.createElement('video');
     remoteContainer.appendChild(element);
@@ -669,6 +714,7 @@
       console.log('child element NOT FOUND');
     }
   }
+  --*/
 
   function removeAllRemoteVideo() {
     while (remoteContainer.firstChild) {
@@ -714,7 +760,18 @@
     }    
   }
 
+
+  // ========== initilaise onload ========
+  initMcu();
+  mcu.startMix();
+
+  // ---- auto connect ---
+  //if (isAutoConnect()) {
+  //}
+
+  // --- control GUI ---
   updateButtons();
+
   console.log('=== ready ==='); 
 </script>
 </html>
