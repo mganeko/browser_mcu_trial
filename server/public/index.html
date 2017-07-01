@@ -553,8 +553,8 @@
     let element = document.createElement('video');
     remoteContainer.appendChild(element);
     element.id = 'remote_' + id;
-    element.width = 320;
-    element.height = 240;
+    element.width = 480; //320;
+    element.height = 360; //240;
     element.srcObject = stream;
     element.play();
     element.volume = 0;

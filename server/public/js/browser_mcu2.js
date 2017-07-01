@@ -20,8 +20,29 @@
     //
     // Server, Member
     //   - wss, or socket.io
-    //  
+    //
+    // --- task candidates --
+    //  - clean up, when member reloded (server)
+    //  - change canvas size, remote video size, remote video visible/hidden
+    //  - support multiple video for same peer 
+    //  - support multiple audio for same peer
+    //  DONE - correct timing for startMix/stopMix
+    //  - callme , in member
+    //  DONE - updateButtons()
 
+    // --- audio minus one for Meeting mode --
+    // MEMO
+    // in AUDIO_MODE_MINUS_ONE
+    //  - prepare outputNode and stream, when got Offer
+    //   DONE - streams key can not be incoming stream.id
+    //   DONE - key should be peerId, given from outside
+    //   DONE - prepareMinusOneStream(peerid)
+    //   NOT NEED - removeMinusOneStream(peerid)
+    //   WRITE, NOT TESTED - getMinusOneStream(peerid)
+    //  - provide
+    //   DONE - addRemoteAudioMinusOne(peerid, stream)
+    //   DONE - removeRemoteAudioMinusOne(peerid)
+    //   DONE - removeAllRemoteAudioMinusOne()
 
 "use strict"
 
@@ -220,8 +241,8 @@ var BrowserMCU = function() {
         let remoteVideo = document.createElement('video');
         remoteVideo.id = "remotevideo_" + stream.id;
         remoteVideo.style.border = "1px solid black";
-        remoteVideo.style.width = "480px"; // 16x30
-        remoteVideo.style.height = "270px"; // 9x30
+        remoteVideo.style.width = "320px"; // 16x20; //"480px"; // 16x30
+        remoteVideo.style.height = "180px"; // 9x20; //"270px"; // 9x30
         // to hide :: remoteVideo.style.display = 'none'; // for Chrome (hidden NG)
         //remoteVideo.controls = true;
         remoteVideo.srcObject = stream;
@@ -348,25 +369,6 @@ var BrowserMCU = function() {
         inputNodes = [];
     }
 
-    // --- audio minus one for Meeting mode --
-    // MEMO
-    // in AUDIO_MODE_MINUS_ONE
-    //  - prepare outputNode and stream, when got Offer
-    //   DONE - streams key can not be incoming stream.id
-    //   DONE - key should be peerId, given from outside
-    //   WRITE, NOT TESTED - prepareMinusOneStream(peerid)
-    //   NOT NEED - removeMinusOneStream(peerid)
-    //   WRITE, NOT TESTED - getMinusOneStream(peerid)
-    //  - provide
-    //   WRITE, NOT TESTED - addRemoteAudioMinusOne(peerid, stream)
-    //   WRITE, NOT TESTED - removeRemoteAudioMinusOne(peerid)
-    //   WRITE, NOT TESTED- removeAllRemoteAudioMinusOne()
-
-    //let inputNodes = [];
-    //let minusOneOutputNodes = [];
-    //let minusOneStreams = [];
-    //let mixAllOutputNode = null;
-
     this.prepareMinusOneStream = function(peerId) {
         let stream = minusOneStreams[peerId];
         if (stream) {
@@ -487,7 +489,7 @@ var BrowserMCU = function() {
 
     this.removeAllRemoteAudioMinusOne = function() {
         for (let key in minusOneStreams) {
-            removeRemoteAudioMinusOne(key);
+            this.removeRemoteAudioMinusOne(key);
         }
     }
 };

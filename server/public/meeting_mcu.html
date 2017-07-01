@@ -16,7 +16,7 @@
 <body>
   browser_mcu meeting with websocket<br />
   <button id="connect_button"  onclick="connect();">Connect</button>
-  <button id="disconnect_button"  onclick="disconnect();">Disconnect</button>
+  <button id="disconnect_button"  onclick="disconnectAll();">Disconnect</button>
   <span id="state_span"></span>
   <div>
     mixed video<br />
@@ -126,6 +126,9 @@
     }
   }
 
+  function getConnectionCount() {
+    return  Object.keys(Connections).length;
+  }
 
   // -------- websocket ----  
   let wsUrl = 'ws://' +  window.location.hostname + ':' + window.location.port + '/';
@@ -227,6 +230,7 @@
       }
       */
 
+      /*
       // -- remove Video --
       let stream = getRemoteStream(fromId);
       mcu.removeRemoteVideo(stream);
@@ -238,6 +242,9 @@
       removeConection(fromId);
 
       updateButtons();
+      */
+
+      dissconnectOne(fromId);
     }
   };
   
@@ -451,8 +458,8 @@
       else if (peer.iceConnectionState === 'failed') {
         console.log('-- failed, so give up --');
 
-        console.warn('NOT IMPREMENTED YET. dissconect only this peer');
-        //disconnect();
+        console.log('dissconect only this peer id:' + id);
+        dissconnectOne(id);
       }
     };
     peer.onicegatheringstatechange = function() {
@@ -497,7 +504,14 @@
       console.warn('no mix stream, but continue.');
     }
 
+    // -- start mix, if this is first connection ---
+    if (getConnectionCount() === 0) {
+      console.log('--- start mix ----');
+      mcu.startMix();
+    }
+
     addConnection(id, peer);
+    updateButtons();
     return peer;
   }
 
@@ -638,11 +652,11 @@
   -- */
   
   // close PeerConnection
-  function disconnect() {
+  function disconnectAll() {
     broadcastJson({type: "bye"});
     
     // ---- close all peers ---
-    removeAllConnections();
+    closeAllConnections();
 
     // --- remove all videos ---
     mcu.removeAllRemoteVideoStream();
@@ -650,18 +664,30 @@
     // --- remove all audio ---
     mcu.removeAllRemoteAudioMinusOne();
 
-    if (peerConnection) {
-      console.log('Hang up.');
-      peerConnection.close();
-      peerConnection = null;
-      
-      removeAllRemoteVideo();
-    }
-    else {
-      console.warn('peer NOT exist.');
+    // -- stop mix ---
+    console.log('--- stop mix ----');
+    mcu.stopMix();
+
+    updateButtons();
+  }
+
+  function dissconnectOne(peerid) {
+    // -- remove Video --
+    let stream = getRemoteStream(peerid);
+    mcu.removeRemoteVideo(stream);
+
+    // -- remove audio ---
+    mcu.removeRemoteAudioMinusOne(peerid)
+
+    // -- remove peer ---
+    removeConection(peerid);
+
+    // --- stop mix --
+    if (getConnectionCount() === 0) {
+      console.log('--- stop mix ----');
+      mcu.stopMix();
     }
 
-    mcu.stopMix();
     updateButtons();
   }
   
@@ -716,6 +742,7 @@
   }
   --*/
 
+  /*--
   function removeAllRemoteVideo() {
     while (remoteContainer.firstChild) {
       remoteContainer.firstChild.pause();
@@ -723,27 +750,17 @@
       remoteContainer.removeChild(remoteContainer.firstChild);
     }
   }
+  --*/
 
   function updateButtons() {
-    console.log('updateButtons() NOT YET');
-    return;
-
-    /*
-    if (peerConnection) {
+    if (getConnectionCount() > 0) {
       disableElement('connect_button');
       enabelElement('disconnect_button');
     }
     else {
-      if (localStream) {
-        enabelElement('connect_button');
-      }
-      else {
-        disableElement('connect_button');        
-      }
-
+      enabelElement('connect_button');
       disableElement('disconnect_button');
     }
-    */
   }
 
   function enabelElement(id) {
@@ -763,7 +780,7 @@
 
   // ========== initilaise onload ========
   initMcu();
-  mcu.startMix();
+  // NOT start yet //mcu.startMix();
 
   // ---- auto connect ---
   //if (isAutoConnect()) {
