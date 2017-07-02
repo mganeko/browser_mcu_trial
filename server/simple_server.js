@@ -66,7 +66,9 @@ wsServer.on('connection', function connection(ws) {
   broadcast( { type: 'notify', text: 'new client connected. count=' + getClientCount() } );
 
   ws.on('close', function () {
-    console.log('client closed. id=' + getId(ws) + '  , total clients=' + getClientCount());
+    const fromId = getId(ws);
+    console.log('client closed. id=' + fromId + '  , total clients=' + getClientCount());
+    broadcast( { type: 'client_disconnect', from: fromId});
     broadcast( { type: 'notify', text: 'client closed. count=' + getClientCount() } );
   });
   ws.on('error', function(err) {

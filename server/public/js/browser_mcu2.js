@@ -22,7 +22,8 @@
     //   - wss, or socket.io
     //
     // --- task candidates --
-    //  - clean up, when member reloded (server)
+    //  DONE - clean up, when member reloded (server)
+    //  - setup pc_config (STUN, TURN)
     //  - change canvas size, remote video size, remote video visible/hidden
     //  - support multiple video for same peer 
     //  - support multiple audio for same peer

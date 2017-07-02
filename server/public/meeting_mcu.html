@@ -213,36 +213,14 @@
         return;
       }
 
-      /*
-      if (from !== peerPartnerId) {
-        console.warn('bye from Wrong partner:' + from + ',  MUST BE:' + peerPartnerId);
+      dissconnectOne(fromId);
+    }
+    else if (message.type === 'client_disconnect') {
+      console.log('-- remote peer disconnected. id:' + fromId);
+      if (! isConnected(fromId)) {
+        console.error('NOT Connected to id:' + fromId);
         return;
       }
-
-      if (peerConnection) {
-        let streams = peerConnection.getRemoteStreams();
-        for (let key in streams) {
-          let stream = streams[key];
-           removeRemoteVideo(stream.id);
-        }
-        peerConnection.close();
-        peerConnection = null;
-      }
-      */
-
-      /*
-      // -- remove Video --
-      let stream = getRemoteStream(fromId);
-      mcu.removeRemoteVideo(stream);
-
-      // -- remove audio ---
-      mcu.removeRemoteAudioMinusOne(fromId)
-
-      // -- remove peer ---
-      removeConection(fromId);
-
-      updateButtons();
-      */
 
       dissconnectOne(fromId);
     }
