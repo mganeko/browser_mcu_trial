@@ -27,7 +27,7 @@
     //  - support multiple video for same peer 
     //  - support multiple audio for same peer
     //  DONE - correct timing for startMix/stopMix
-    //  - callme , in member
+    //  DONE - callme , in member
     //  DONE - updateButtons()
 
     // --- audio minus one for Meeting mode --
@@ -38,7 +38,7 @@
     //   DONE - key should be peerId, given from outside
     //   DONE - prepareMinusOneStream(peerid)
     //   NOT NEED - removeMinusOneStream(peerid)
-    //   WRITE, NOT TESTED - getMinusOneStream(peerid)
+    //   (WRITE, NOT TESTED - getMinusOneStream(peerid))
     //  - provide
     //   DONE - addRemoteAudioMinusOne(peerid, stream)
     //   DONE - removeRemoteAudioMinusOne(peerid)

@@ -86,6 +86,22 @@
       peerPartnerId = from;
       makeOffer();
     }
+    else if (message.type === 'callme') {
+      // --- request from MCU --
+      console.log('got callme from MCU:' + from);
+      if (peerPartnerId) {
+        console.warn('already connected, so ignore');
+        return;
+      }
+      if (! localStream) {
+        console.warn('localstream NOT READY, so ignore');
+        return;
+      }
+
+      // --- start offer ----
+      peerPartnerId = from;
+      makeOffer();
+    }
     else if (message.type === 'offer') {
       console.warn('got offer, but MUST NOT got it');
       return;
@@ -138,6 +154,7 @@
         }
         peerConnection.close();
         peerConnection = null;
+        peerPartnerId = null;
       }
 
       updateButtons();
