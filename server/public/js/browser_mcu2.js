@@ -18,9 +18,17 @@
     //   - SIDE_BY_SIDE (mix all audio)
     //   - NO_AUDIO ()
     //
-    // Server, Member
-    //   - wss, or socket.io
-    //
+    // Server, Member, MUC
+    //   - ws, (wss)
+    //   - socket.io, (ssl)
+    //   - make room
+    //   - start mcu with headless
+    //     DONE- simple (fixed room)
+    //     - specify room
+    //     - quit when room closed
+    //   - mcu auto load (callme)
+
+
     // --- task candidates --
     //  DONE - clean up, when member reloded (server)
     //  - setup pc_config (STUN, TURN)
