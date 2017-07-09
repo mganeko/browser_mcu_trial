@@ -461,7 +461,13 @@
         console.log('removing remote audio minus-one');
       }
     };
-    
+
+    // -- start mix, if this is first connection ---
+    if (getConnectionCount() === 0) {
+      console.log('--- start mix ----');
+      mcu.startMix();
+    }
+
     // -- add mixed stream with minus one audio --
     let stream = mcu.prepareMinusOneStream(id);
     if (stream) {
@@ -480,12 +486,6 @@
     }
     else {
       console.error('NO mix stream, but continue.');
-    }
-
-    // -- start mix, if this is first connection ---
-    if (getConnectionCount() === 0) {
-      console.log('--- start mix ----');
-      mcu.startMix();
     }
 
     addConnection(id, peer);

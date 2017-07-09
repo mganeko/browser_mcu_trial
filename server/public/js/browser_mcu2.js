@@ -5,53 +5,65 @@
 // 
 // TODO
 //  (1) DONE: Provide All-mix audio mode: AUDIO_MODE_ALL = 2
-//  (2) Provide Minus-one audio mode: AUDIO_MODE_MINUS_ONE = 1
-//  (3) Provide NO Audio mode: AUDIO_MODE_NONE = 0
+//  (2) DONE: Provide Minus-one audio mode: AUDIO_MODE_MINUS_ONE = 1
+//  (3) DONE: Provide NO Audio mode: AUDIO_MODE_NONE = 0
 
-    // MEMO
-    // 
-    // MCU browser
-    // 
-    //
-    // Design new mode:
-    //   - MEETING_MODE (minus one)
-    //   - SIDE_BY_SIDE (mix all audio)
-    //   - NO_AUDIO ()
-    //
-    // Server, Member, MUC
-    //   - ws, (wss)
-    //   - socket.io, (ssl)
-    //   - make room
-    //   - start mcu with headless
-    //     DONE- simple (fixed room)
-    //     - specify room
-    //     - quit when room closed
-    //   - mcu auto load (callme)
+// MEMO
+// 
+// MCU browser
+// 
 
+// CANCEL: Design new mode:
+//  - (MEETING_MODE (minus one))
+//  - (SIDE_BY_SIDE (mix all audio))
+//  - (NO_AUDIO ())
 
-    // --- task candidates --
-    //  DONE - clean up, when member reloded (server)
-    //  - setup pc_config (STUN, TURN)
-    //  - change canvas size, remote video size, remote video visible/hidden
-    //  - support multiple video for same peer 
-    //  - support multiple audio for same peer
-    //  DONE - correct timing for startMix/stopMix
-    //  DONE - callme , in member
-    //  DONE - updateButtons()
+// Large scale tasks:
+//  - chage directory structrue, link js dir
+//  - re-write README.md
+//  - change tab as 2 spaces
+//  - prepare multiroom_server, for multi-room / multi-mcu invoke
+//    - socket.io server, with room
+//    - get roomname from url in mcu browser, join to the room
+//  - prepare signaling service, register room, use user mcu, pretty member page
+//
+// Server, Member, MUC
+//   - ws, (wss)
+//   - socket.io, (ssl)
+//   - make room
+//   - start mcu with headless
+//     DONE- simple (fixed  1 room)
+//      - DONE: fix 1st member, no remote stream PROBLEM (only audio track in onaddstream)
+//      - multiple room
+//        - specify room
+//        - quit when room closed
+//   - mcu auto load (callme)
 
-    // --- audio minus one for Meeting mode --
-    // MEMO
-    // in AUDIO_MODE_MINUS_ONE
-    //  - prepare outputNode and stream, when got Offer
-    //   DONE - streams key can not be incoming stream.id
-    //   DONE - key should be peerId, given from outside
-    //   DONE - prepareMinusOneStream(peerid)
-    //   NOT NEED - removeMinusOneStream(peerid)
-    //   (WRITE, NOT TESTED - getMinusOneStream(peerid))
-    //  - provide
-    //   DONE - addRemoteAudioMinusOne(peerid, stream)
-    //   DONE - removeRemoteAudioMinusOne(peerid)
-    //   DONE - removeAllRemoteAudioMinusOne()
+// --- task candidates --
+//  DONE - clean up, when member reloded (server)
+//  - modify init() with args
+//  - setup pc_config (STUN, TURN)
+//  - change canvas size, remote video size, remote video visible/hidden
+//  - change bandwidth
+//  - support multiple video for same peer 
+//  - support multiple audio for same peer
+//  DONE - correct timing for startMix/stopMix
+//  DONE - callme , in member
+//  DONE - updateButtons()
+
+// --- audio minus one for Meeting mode --
+// MEMO
+// DONE: in AUDIO_MODE_MINUS_ONE
+// DONE - prepare outputNode and stream, when got Offer
+//   DONE - streams key can not be incoming stream.id
+//   DONE - key should be peerId, given from outside
+//   DONE - prepareMinusOneStream(peerid)
+//   NOT NEED - removeMinusOneStream(peerid)
+//   (WRITE, NOT TESTED - getMinusOneStream(peerid))
+// DONE  - provide
+//   DONE - addRemoteAudioMinusOne(peerid, stream)
+//   DONE - removeRemoteAudioMinusOne(peerid)
+//   DONE - removeAllRemoteAudioMinusOne()
 
 "use strict"
 
