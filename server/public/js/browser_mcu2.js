@@ -27,19 +27,20 @@
 //    - get roomname from url in mcu browser, join to the room
 //  - prepare signaling service, register room, use user mcu, pretty member page
 //
-// Server, Member, MUC
+// Server tasks: (with Member page, MCU page)
 //   - ws, (wss)
 //   - socket.io, (ssl)
 //   - make room
 //   - start mcu with headless
-//     DONE- simple (fixed  1 room)
-//      - DONE: fix 1st member, no remote stream PROBLEM (only audio track in onaddstream)
-//      - multiple room
-//        - specify room
-//        - quit when room closed
+//     DONE - simple (fixed  1 room)
+//       DONE - fix 1st member, no remote stream PROBLEM (only audio track in onaddstream)
+//       DONE - use options to spcefiy URL, browser path 
+//     - multiple room
+//       - specify room
+//       - quit when room closed
 //   - mcu auto load (callme)
 
-// --- task candidates --
+// --- MCU core tasks --
 //  DONE - clean up, when member reloded (server)
 //  - modify init() with args
 //  - setup pc_config (STUN, TURN)

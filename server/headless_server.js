@@ -8,17 +8,19 @@
 
 'use strict';
 
+const mcuOptions = require('./options').mcuOptions;
+
 const SSL_KEY = 'cert/server.key';
 const SSL_CERT = 'cert/server.crt';
 const fs = require('fs');
-var options = {
+var sslOptions = {
  //key : fs.readFileSync(SSL_KEY).toString(),
  //cert : fs.readFileSync(SSL_CERT).toString()
 };
 
-const HEADLESS_FULL_PATH = '/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome';
-const HEADLESS_OPTION = '--headless --disable-gpu --remote-debugging-port=9222';
-const HEADLESS_MCU_URL = 'http://localhost:3000/meeting_mcu.html';
+//const HEADLESS_FULL_PATH = '/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome';
+//const HEADLESS_OPTION = '--headless --disable-gpu --remote-debugging-port=9222';
+//const HEADLESS_MCU_URL = 'http://localhost:3000/meeting_mcu.html';
 
 const childProcess = require('child_process');
 let headless = null;
@@ -37,7 +39,7 @@ const webPort = 3000;
 app.use(express.static('public'));
 
 // -- https ---
-//const webServer = https.createServer( options, app ).listen(webPort, function(){
+//const webServer = https.createServer( sslOptions, app ).listen(webPort, function(){
 //    console.log('Web server start. https://serverurl:' + webServer.address().port + '/');
 //});
 
@@ -146,9 +148,10 @@ function sendTo(toId, message) {
 
 function startHeadlessChrome() {
   let openURL = buildURL('');
-  let execPath = 
-  headless = childProcess.execFile(HEADLESS_FULL_PATH,
-    ['--headless', '--disable-gpu', '--remote-debugging-port=9222', openURL],
+  let mcuArgs = buildArgs(openURL);
+  headless = childProcess.execFile(mcuOptions.headlessFullpath,
+    //['--headless', '--disable-gpu', '--remote-debugging-port=9222', openURL],
+    mcuArgs,
     (error, stdout, stderr) => {
       if (error) {
         //console.error('headless chrome ERROR:', error);
@@ -170,8 +173,16 @@ function startHeadlessChrome() {
 }
 
 function buildURL(channel) {
-  let url = HEADLESS_MCU_URL;
+  let url = mcuOptions.headlessUrl;
+  //console.log('mcu URL=' + url);
   return url;
+}
+
+function buildArgs(url) {
+  let args = mcuOptions.headlessArgs;
+  args.push(url);
+  //console.log(args);
+  return args;
 }
 
 function stopHeadlessChrome() {
