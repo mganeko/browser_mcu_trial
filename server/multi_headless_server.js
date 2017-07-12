@@ -95,7 +95,7 @@ io.on('connection', function(socket) {
   socket.on('disconnect', function() {
     // close user connection
     console.log('client disconnected. socket id=' + getId(socket) + '  , total clients=' + getClientCount());
-    //cleanUpPeer(socket);
+    emitMessage('message', { type: 'bye', from: getId(socket)})
   });
   socket.on('error',  function(err) {
     console.error('socket ERROR:', err);
@@ -103,11 +103,11 @@ io.on('connection', function(socket) {
 
   socket.on('enter', function(roomname) {
     socket.join(roomname);
-    console.log('id=' + socket.id + ' enter room=' + roomname);
+    console.log('id=' + getId(socket) + ' enter room=' + roomname);
     setRoomname(roomname);
 
     let count = getClientCountInRoom(roomname);
-    sendback('welcome', {id: socket.id, room: roomname, members: count});
+    sendback('welcome', {id: getId(socket), room: roomname, members: count});
   });
 
   function setRoomname(room) {

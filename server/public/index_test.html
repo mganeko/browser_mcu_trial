@@ -482,23 +482,6 @@
     console.log('calling ..');
     sendJson({type: "call"});
   }
-
-  /* --
-  function callWithCapabilitySDP() {
-    peerConnection = prepareNewConnection();
-    peerConnection.createOffer()
-    .then(function (sessionDescription) {
-      console.log('createOffer() succsess in callWithCapabilitySDP()');
-
-      // WITHOUT setLocalDesctiption(), and send to server
-      console.log('calling with Capalibity SDP ..');
-      sendJson({type: "call", planb: getUsePlanB(), capability: sessionDescription.sdp});
-    })
-    .catch(function(err) {
-      console.error('ERROR in callWithCapabilitySDP():', err);
-    });
-  }
-  -- */
   
   // close PeerConnection
   function disconnect() {
