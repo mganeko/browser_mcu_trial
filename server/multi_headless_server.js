@@ -148,17 +148,17 @@ io.on('connection', function(socket) {
 
   socket.on('message', function incoming(inMessage) {
     const id = getId(socket);
-    console.log('received fromId=%s type=%s',  id, inMessage.type);
-    message.from = id;
+    console.log('received fromId=%s to=%s type=%s',  id, inMessage.to, inMessage.type);
+    inMessage.from = id;
  
-    let target = message.sendto;
+    let target = inMessage.to;
     if (target) {
       //console.log('===== message emit to -->' + target);
-      socketMessageTo(target, message);
+      sendMessageTo(target, inMessage);
     }
     else {
       // broadcast in room
-      emitMessage('message', message);
+      emitMessage('message', inMessage);
     }
   });
 });
