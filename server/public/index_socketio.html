@@ -63,7 +63,8 @@
   const socket = io.connect('/');
   socket.on('connect', function(evt) {
     console.log('socket.io connected()');
-    const room = '_testroom_'
+    const room = getRoomName();
+    console.log('enter room=' + room);
     socket.emit('enter', room);
   });
   socket.on('error', function(err) {
@@ -308,6 +309,17 @@
     // --- websocket --
     //const message = JSON.stringify(json);
     //ws.send(message);
+  }
+
+  function getRoomName() {
+      const search = window.location.search;
+      const re = new RegExp('room=([^&=]+)');
+      const results = re.exec(search);
+      let room = '_testroom_';
+      if (results) {
+          room = results[1];
+      }
+      return room;
   }
 
   // ---------------------- connection handling -----------------------

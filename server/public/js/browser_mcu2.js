@@ -30,7 +30,7 @@
 // Server tasks: (with Member page, MCU page)
 //   - ws, (wss)
 //   - socket.io, (ssl)
-//   - make room
+//   DONE - make room
 //   - start mcu with headless
 //     DONE - simple (fixed  1 room)
 //       DONE - fix 1st member, no remote stream PROBLEM (only audio track in onaddstream)
