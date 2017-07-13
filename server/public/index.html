@@ -253,6 +253,23 @@
 
       updateButtons();
     }
+    else if (message.type === 'client_disconnect') {
+      console.log('-- remote peer disconnected');
+      if (from === peerPartnerId) {
+        if (peerConnection) {
+          let streams = peerConnection.getRemoteStreams();
+          for (let key in streams) {
+            let stream = streams[key];
+            removeRemoteVideo(stream.id);
+          }
+          peerConnection.close();
+          peerConnection = null;
+          peerPartnerId = null;
+        }
+
+        updateButtons();
+      }
+    }
   }
 
   // ---------------------- media handling ----------------------- 

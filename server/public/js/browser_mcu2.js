@@ -43,7 +43,9 @@
 //   DONE - MCU page / meeting_mcu_scoketio.html ... handleMessage()
 //   DONE - member page /index.html (ws) ... handleMessage()
 //   DONE - MCU page / meeting_mcu.html ... handleMessage()
-//   - headless_server.js, simple_server.js ... disconnect --> bye message
+//   DONE- headless_server.js, simple_server.js ... disconnect --> user_disconnect --> index.html,
+//   DONE - multi_hedless_server.js ... disconnect --> user_disconnect --> index_socketio, meeting_mcu_socketio
+
 
 // --- MCU core tasks --
 //  DONE - clean up, when member reloded (server)

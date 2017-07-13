@@ -95,7 +95,8 @@ io.on('connection', function(socket) {
   socket.on('disconnect', function() {
     // close user connection
     console.log('client disconnected. socket id=' + getId(socket) + '  , total clients=' + getClientCount());
-    emitMessage('message', { type: 'bye', from: getId(socket)})
+    //emitMessage('message', { type: 'bye', from: getId(socket)})
+    emitMessage('message', { type: 'client_disconnect', from: getId(socket)})
   });
   socket.on('error',  function(err) {
     console.error('socket ERROR:', err);
