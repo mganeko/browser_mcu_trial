@@ -88,6 +88,8 @@ function getClientCountInRoom(room) {
 }
 
 
+
+
 io.on('connection', function(socket) {
   console.log('client connected. socket id=' + getId(socket) + '  , total clients=' + getClientCount());
   //broadcast( { type: 'notify', text: 'new client connected. count=' + getClientCount() } );
@@ -108,6 +110,10 @@ io.on('connection', function(socket) {
     setRoomname(roomname);
 
     let count = getClientCountInRoom(roomname);
+    if (! isRoomExist(roomname)) {
+      console.log('--- prepare room. name=' + roomname);
+      prepareRoom(roomname);
+    }
     sendback('welcome', {id: getId(socket), room: roomname, members: count});
   });
 
@@ -163,6 +169,73 @@ io.on('connection', function(socket) {
     }
   });
 });
+
+
+
+//---- rooms ---
+let rooms = []; 
+var Room = function() {
+  let roomname = '';
+  let headlessProc = null;
+  //let passwordHash = '';
+}
+
+function getRoom(name) {
+  let room = rooms[name];
+  return room;
+}
+
+function isRoomExist(name) {
+  const room = rooms[name];
+  if (room) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+function checkRoom(name  /*,password*/) {
+  console.warn('NOT YET');
+}
+
+function prepareRoom(name  /*, passoword*/) {
+  if (isRoomExist(name)) {
+    console.error('ERROR: room ALREADY exist. name=' + room);
+    return false;
+  }
+
+  let room = new Room();
+  room.roomname = name;
+
+  // -- start headless borowser for mcu --
+  room.headlessProc = startHeadlessChrome(name);
+  if (! room.headlessProc) {
+    console.error('CANNOT start headless MCU');
+    return false;
+  }
+
+  // -- addRoom ---
+  rooms[name] = room;
+
+  return true;
+}
+
+
+function handleRoomClose(roomname) {
+  let room = getRoom(roomname);
+  if (room) {
+    room.headlessProc = null;
+  }
+}
+
+function closeRoom(roonname) {
+  let room = getRoom(roomname);
+  if ( room && room.headlessProc ) {
+    stopHeadlessChrome(room.headlessProc);
+    room.headlessProc = null;
+  }
+}
 
 //function sendback(ws, message) {
 //  const str = JSON.stringify(message);
@@ -300,10 +373,10 @@ function sendTo(toId, message) {
 
 // --- headless browser ---
 
-function startHeadlessChrome() {
-  let openURL = buildURL('');
+function startHeadlessChrome(roomname) {
+  let openURL = buildURL(roomname);
   let mcuArgs = buildArgs(openURL);
-  headless = childProcess.execFile(mcuOptions.headlessFullpath,
+  let proc = childProcess.execFile(mcuOptions.headlessFullpath,
     //['--headless', '--disable-gpu', '--remote-debugging-port=9222', openURL],
     mcuArgs,
     (error, stdout, stderr) => {
@@ -320,15 +393,17 @@ function startHeadlessChrome() {
   console.log('-- start chrome --');
   console.log(' url=' + openURL);
 
-  headless.on('close', (code) => {
+  proc.on('close', (code) => {
     console.log(`child process exited with code ${code}`);
-    headless = null;
+    handleRoomClose(roomname);
   });
+
+  return proc;
 }
 
-function buildURL(channel) {
-  let url = mcuOptions.headlessUrl;
-  //console.log('mcu URL=' + url);
+function buildURL(roomname) {
+  let url = mcuOptions.headlessUrl + '?room=' + roomname;
+  console.log('mcu URL=' + url);
   return url;
 }
 
@@ -339,11 +414,11 @@ function buildArgs(url) {
   return args;
 }
 
-function stopHeadlessChrome() {
-  if (headless) {
-    headless.kill('SIGKILL'); // OK
+function stopHeadlessChrome(proc) {
+  if (proc) {
+    proc.kill('SIGKILL'); // OK
     console.log('---terminate headless chrome ----');
-    headless = null;
+    proc = null;
   }
 }
 
