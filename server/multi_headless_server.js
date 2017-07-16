@@ -16,6 +16,7 @@
 
 const mcuOptions = require('./options').mcuOptions;
 
+const CLOSE_MCU_TIMER_SEC = 10;
 const SSL_KEY = 'cert/server.key';
 const SSL_CERT = 'cert/server.crt';
 const fs = require('fs');
@@ -76,9 +77,15 @@ function getClientCountInRoom(room) {
   //console.log(io.sockets.adapter.rooms[room]);
   //console.log(io.sockets.adapter.rooms[room].length);
 
-  let count;  
-  if (io && io.sockets && io.sockets.adapter && io.sockets.adapter.rooms && io.sockets.adapter.rooms[room]) {
-    count = io.sockets.adapter.rooms[room].length;
+  let count = 0;  
+  if (io && io.sockets && io.sockets.adapter && io.sockets.adapter.rooms) {
+    let clients = io.sockets.adapter.rooms[room];
+    if (clients) {
+      count = clients.length;
+    }
+    else {
+      count = 0;
+    }
   }
   else {
     console.log('===ERROR== CANNOT get clients count in room');
@@ -98,6 +105,33 @@ io.on('connection', function(socket) {
     // close user connection
     console.log('client disconnected. socket id=' + getId(socket) + '  , total clients=' + getClientCount());
     //emitMessage('message', { type: 'bye', from: getId(socket)})
+
+    const roomname = getRoomname();
+    if (roomname && (roomname !== '')) {
+      console.log('-- leave from room=' + roomname);
+      socket.leave(roomname);
+
+      if (isMcu()) {
+        // MCU shutdown
+        console.log('=== MCU disconnected. room=' + roomname);
+      }
+      else {
+        // member disconnected
+        const count = coundDownMembersInRoom(roomname);
+        console.log('=== member disconnected. room=' + roomname + ',  count=' + count);
+        if (count === 0) {
+          console.log('no members in room=' + roomname);
+          setCloseTimer(roomname);          
+        }
+      }
+
+      //let count = getClientCountInRoom(roomname);
+      //if (count < 2) { // WARN! mcu browser is still in the room. Have to count members in the room (except MCU)
+      //  console.log('no members in room=' + roomname);
+      //  setCloseTimer(roomname);
+      //}
+    }
+
     emitMessage('message', { type: 'client_disconnect', from: getId(socket)})
   });
   socket.on('error',  function(err) {
@@ -108,12 +142,25 @@ io.on('connection', function(socket) {
     socket.join(roomname);
     console.log('id=' + getId(socket) + ' enter room=' + roomname);
     setRoomname(roomname);
+    clearCloseTimer(roomname);
 
     let count = getClientCountInRoom(roomname);
-    if (! isRoomExist(roomname)) {
-      console.log('--- prepare room. name=' + roomname);
-      prepareRoom(roomname);
+    let ready = prepareRoom(roomname);
+    countUpMembersInRoom(roomname);
+    if (ready)  {
+      sendback('welcome', {id: getId(socket), room: roomname, members: count});
     }
+    else {
+      console.error('ERORR: failed to prepare room (invoke MCU');
+    }
+  });
+  socket.on('mcu_enter', function(roomname) {
+    socket.join(roomname);
+    console.log('id=' + getId(socket) + ' MCU enter room=' + roomname);
+    setRoomname(roomname);
+    setMcu();
+
+    let count = getClientCountInRoom(roomname);
     sendback('welcome', {id: getId(socket), room: roomname, members: count});
   });
 
@@ -124,6 +171,19 @@ io.on('connection', function(socket) {
   function getRoomname() {
     var room = socket.roomname;
     return room;
+  }
+
+  function setMcu() {
+    socket.isMcu = true;
+  }
+
+  function isMcu() {
+    if (socket.isMcu) {
+      return true;
+    }
+    else {
+      return false;
+    }
   }
 
   // --- emit message to members in the same room --
@@ -177,6 +237,8 @@ let rooms = [];
 var Room = function() {
   let roomname = '';
   let headlessProc = null;
+  let closeTimer = null;
+  let members = 0;
   //let passwordHash = '';
 }
 
@@ -200,27 +262,65 @@ function checkRoom(name  /*,password*/) {
 }
 
 function prepareRoom(name  /*, passoword*/) {
-  if (isRoomExist(name)) {
-    console.error('ERROR: room ALREADY exist. name=' + room);
-    return false;
+  let room = getRoom(name);
+  if (! room) {
+    console.log('create new room. name=' + room);
+    room = new Room();
+    room.roomname = name;
+    room.members = 0;
+
+    // -- addRoom ---
+    rooms[name] = room;
   }
+  else {
+    console.log('room already exist. name=' + name);
+  }
+  //console.log('==== room proc=' + room.headlessProc);
 
-  let room = new Room();
-  room.roomname = name;
-
-  // -- start headless borowser for mcu --
-  room.headlessProc = startHeadlessChrome(name);
+  // NOTE:
+  // - chiled process will exist when using '--headless' option
+  // - without '--headless' option, invokec process will pass to existing browser process and quit soon.
+  //
   if (! room.headlessProc) {
-    console.error('CANNOT start headless MCU');
-    return false;
+    console.log('starting headless browser MCU for room=' + name);
+    // -- start headless borowser for mcu --
+    room.headlessProc = startHeadlessChrome(name);
+    //console.log(' -- after exec room proc=' + room.headlessProc);
+    if (! room.headlessProc) {
+      console.error('CANNOT start headless MCU');
+      return false;
+    }
   }
-
-  // -- addRoom ---
-  rooms[name] = room;
+  //console.log('--- prepareRoom end---');
 
   return true;
 }
 
+function countUpMembersInRoom(roomname) {
+  let room = getRoom(roomname);
+  if (room) {
+    room.members += 1;
+    console.log('countUpMembersInRoom count=' + room.members);
+    return room.members;
+  }
+  else {
+    console.warn('room NOT READY: name=' + roomname);
+    return -1;
+  }
+}
+
+function coundDownMembersInRoom(roomname) {
+  let room = getRoom(roomname);
+  if (room) {
+    room.members -= 1;
+    console.log('coundDownMembersInRoom count=' + room.members);
+    return room.members;
+  }
+  else {
+    console.warn('room NOT READY: name=' + roomname);
+    return -1;
+  }
+}
 
 function handleRoomClose(roomname) {
   let room = getRoom(roomname);
@@ -229,11 +329,36 @@ function handleRoomClose(roomname) {
   }
 }
 
-function closeRoom(roonname) {
+function closeRoom(roomname) {
+  console.log('==== closing room === name='+ roomname);
   let room = getRoom(roomname);
-  if ( room && room.headlessProc ) {
-    stopHeadlessChrome(room.headlessProc);
-    room.headlessProc = null;
+  if (room) {
+    if(room.headlessProc) {
+      stopHeadlessChrome(room.headlessProc);
+      room.headlessProc = null;
+    }
+    delete rooms[roomname];
+    room = null;
+  }
+}
+
+function setCloseTimer(roomname) {
+  console.log('--setCloseTimer(%s)--', roomname)
+  let room = getRoom(roomname);
+  if (room && (! room.closeTimer)) {
+    console.log('--set Timeout for close');
+    room.closeTimer = setTimeout( (r) => {
+       closeRoom(r)
+    }, 1000*CLOSE_MCU_TIMER_SEC, roomname);
+  }
+}
+
+function clearCloseTimer(roomname) {
+  let room = getRoom(roomname);
+  if (room && room.closeTimer) {
+    console.log('-- clearCloseTimer room=' + roomname);
+    clearTimeout(room.closeTimer);
+    room.closeTimer = null;
   }
 }
 

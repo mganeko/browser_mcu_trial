@@ -137,7 +137,7 @@
     console.log('socket.io connected()');
     const room = getRoomName();
     console.log('enter room=' + room);
-    socket.emit('enter', room);
+    socket.emit('mcu_enter', room);
   });
   socket.on('error', function(err) {
     console.error('socket.io ERROR:', err);

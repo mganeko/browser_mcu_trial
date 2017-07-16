@@ -31,13 +31,18 @@
 //   - ws, (wss)
 //   - socket.io, (ssl)
 //   DONE - make room
+//   - make room with password
 //   - start mcu with headless
 //     DONE - simple (fixed  1 room)
 //       DONE - fix 1st member, no remote stream PROBLEM (only audio track in onaddstream)
 //       DONE - use options to spcefiy URL, browser path 
 //     - multiple room
-//       - specify room
-//       - quit when room closed
+//       DONE - specify room
+//       DONE - invoke headless browser MCU if not exist
+//         (- invoke headless browser async)
+//       DONE - wait for MUC read, in member page
+//       DONE - quit when room closed, or no member stays 10 seconds (or 1 minutes)
+//         DONE - have to destinguish member / mcu
 //   - mcu auto load (callme)
 //   DONE - member page / index_scoketio.html ... handleMessage()
 //   DONE - MCU page / meeting_mcu_scoketio.html ... handleMessage()

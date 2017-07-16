@@ -37,6 +37,7 @@
   let localStream = null;
   let peerConnection = null;
   let peerPartnerId = null;
+  let enteredRoom = false;
   
   // --- prefix -----
   navigator.getUserMedia  = navigator.getUserMedia    || navigator.webkitGetUserMedia ||
@@ -75,6 +76,8 @@
   });
   socket.on('welcome', function(evt) {
     console.log('welcome:', evt);
+    enteredRoom = true;
+    updateButtons();
   });
   socket.on('message', function(message) {
     console.log('message:', message);
@@ -633,7 +636,12 @@
       if (localStream) {
         disableElement('start_video_button');
         enabelElement('stop_video_button');
-        enabelElement('connect_button');
+        if (enteredRoom) {
+          enabelElement('connect_button');
+        }
+        else {
+          disableElement('connect_button');
+        }
       }
       else {
         enabelElement('start_video_button');
