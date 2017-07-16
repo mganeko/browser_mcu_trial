@@ -32,7 +32,7 @@
 //   - socket.io
 //     DONE - http, ws
 //     - https, wss
-//     - connect / close 
+//     DONE - connect / close 
 //   DONE - make room
 //   - make room with password
 //   DONE - start mcu with headless
