@@ -29,14 +29,17 @@
 //
 // Server tasks: (with Member page, MCU page)
 //   - ws, (wss)
-//   - socket.io, (ssl)
+//   - socket.io
+//     DONE - http, ws
+//     - https, wss
+//     - connect / close 
 //   DONE - make room
 //   - make room with password
-//   - start mcu with headless
+//   DONE - start mcu with headless
 //     DONE - simple (fixed  1 room)
 //       DONE - fix 1st member, no remote stream PROBLEM (only audio track in onaddstream)
 //       DONE - use options to spcefiy URL, browser path 
-//     - multiple room
+//     DONE - multiple room
 //       DONE - specify room
 //       DONE - invoke headless browser MCU if not exist
 //         (- invoke headless browser async)

@@ -61,28 +61,74 @@
   //  bye <---
 
   // ----- use socket.io ---
-  const socket = io.connect('/');
-  socket.on('connect', function(evt) {
-    console.log('socket.io connected()');
-    const room = getRoomName();
-    console.log('enter room=' + room);
-    socket.emit('enter', room);
-  });
-  socket.on('error', function(err) {
-    console.error('socket.io ERROR:', err);
-  });
-  socket.on('disconnect', function(evt) {
-    console.log('socket.io disconnect:', evt);
-  });
-  socket.on('welcome', function(evt) {
-    console.log('welcome:', evt);
-    enteredRoom = true;
-    updateButtons();
-  });
-  socket.on('message', function(message) {
-    console.log('message:', message);
-    handleMessage(message);
-  });
+  //const socket = io.connect('/');
+  let socket = null;
+
+  function connectSocket() {
+    if (socket) {
+      console.warn('socket ALREADY connected. IGNORE');
+      return;
+    }
+    socket = io.connect('/');
+
+    socket.on('connect', function(evt) {
+      console.log('socket.io connected()');
+      const room = getRoomName();
+      console.log('enter room=' + room);
+      socket.emit('enter', room);
+    });
+    socket.on('error', function(err) {
+      console.error('socket.io ERROR:', err);
+    });
+    socket.on('disconnect', function(evt) {
+      console.log('socket.io disconnect:', evt);
+    });
+    socket.on('welcome', function(evt) {
+      console.log('welcome:', evt);
+      enteredRoom = true;
+
+      const waitForInvoke = evt.waitForInvoke;
+
+      // -- auto call --
+      if (localStream) {
+        if (waitForInvoke) {
+          console.log('wait and call..');
+          setTimeout(function() {
+            call();
+            updateButtons();
+          }, 500);
+        }
+        else {
+          console.log('call now');
+          call();
+          updateButtons();
+        }
+      }
+    });
+    socket.on('message', function(message) {
+      console.log('message:', message);
+      handleMessage(message);
+    });
+  }
+
+  function disconnectSocket() {
+    if (! socket) {
+      console.warn('socket NOT connected. IGNORE');
+      return;
+    }
+
+    socket.close();
+    socket = null;
+  }
+
+  function isSoccketConnected() {
+    if (socket) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
 
   function handleMessage(message) {
     const from = message.from;
@@ -163,7 +209,7 @@
         let streams = peerConnection.getRemoteStreams();
         for (let key in streams) {
           let stream = streams[key];
-           removeRemoteVideo(stream.id);
+          removeRemoteVideo(stream.id);
         }
         peerConnection.close();
         peerConnection = null;
@@ -190,6 +236,7 @@
       }
     }
   }
+
   
   // ---------------------- media handling ----------------------- 
   // start local video
@@ -538,7 +585,9 @@
   
   // start PeerConnection
   function connect() {
-    call();
+    connectSocket();
+
+    //call(); // not here
 
     updateButtons();
   }
@@ -564,6 +613,8 @@
     }
 
     peerPartnerId = null;
+
+    disconnectSocket();
     updateButtons();
   }
   
@@ -636,12 +687,12 @@
       if (localStream) {
         disableElement('start_video_button');
         enabelElement('stop_video_button');
-        if (enteredRoom) {
+        //if (enteredRoom) {
           enabelElement('connect_button');
-        }
-        else {
-          disableElement('connect_button');
-        }
+        //}
+        //else {
+        //  disableElement('connect_button');
+        //}
       }
       else {
         enabelElement('start_video_button');

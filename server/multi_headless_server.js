@@ -144,11 +144,17 @@ io.on('connection', function(socket) {
     setRoomname(roomname);
     clearCloseTimer(roomname);
 
+    // -- check if room / MCU ready
     let count = getClientCountInRoom(roomname);
+    if (isRoomReady(roomname)) {
+       sendback('welcome', {id: getId(socket), room: roomname, members: count, waitForInvoke: false});
+    }
+
+    // --- prepare room / MCU
     let ready = prepareRoom(roomname);
     countUpMembersInRoom(roomname);
     if (ready)  {
-      sendback('welcome', {id: getId(socket), room: roomname, members: count});
+      sendback('welcome', {id: getId(socket), room: roomname, members: count,  waitForInvoke: true});
     }
     else {
       console.error('ERORR: failed to prepare room (invoke MCU');
@@ -159,6 +165,7 @@ io.on('connection', function(socket) {
     console.log('id=' + getId(socket) + ' MCU enter room=' + roomname);
     setRoomname(roomname);
     setMcu();
+    setMcuReady(roomname);
 
     let count = getClientCountInRoom(roomname);
     sendback('welcome', {id: getId(socket), room: roomname, members: count});
@@ -237,6 +244,7 @@ let rooms = [];
 var Room = function() {
   let roomname = '';
   let headlessProc = null;
+  let mcuReady = false;
   let closeTimer = null;
   let members = 0;
   //let passwordHash = '';
@@ -257,8 +265,26 @@ function isRoomExist(name) {
   }
 }
 
-function checkRoom(name  /*,password*/) {
-  console.warn('NOT YET');
+function setMcuReady(name) {
+  let room = getRoom(name);
+  if (room) {
+    room.mcuReady = true;
+  }
+}
+
+function isRoomReady(name  /*,password*/) {
+  let room = getRoom(name);
+  if (! room) {
+    // not exist yet
+    return false;
+  }
+
+  if (room.headlessProc && room.mcuReady) {
+    return true;
+  }
+  else {
+    false;
+  }
 }
 
 function prepareRoom(name  /*, passoword*/) {
@@ -268,6 +294,8 @@ function prepareRoom(name  /*, passoword*/) {
     room = new Room();
     room.roomname = name;
     room.members = 0;
+    room.mcuReady = false;
+    room.headlessProc = null;
 
     // -- addRoom ---
     rooms[name] = room;
@@ -326,6 +354,7 @@ function handleRoomClose(roomname) {
   let room = getRoom(roomname);
   if (room) {
     room.headlessProc = null;
+    room.mcuReady = false;
   }
 }
 
@@ -336,6 +365,7 @@ function closeRoom(roomname) {
     if(room.headlessProc) {
       stopHeadlessChrome(room.headlessProc);
       room.headlessProc = null;
+      room.mcuReady = false;
     }
     delete rooms[roomname];
     room = null;
