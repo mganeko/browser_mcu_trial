@@ -47,6 +47,7 @@
 //       DONE - quit when room closed, or no member stays 10 seconds (or 1 minutes)
 //         DONE - have to destinguish member / mcu
 //   - mcu auto load (callme)
+//   - setup pc_config (STUN, TURN)
 //   DONE - member page / index_scoketio.html ... handleMessage()
 //   DONE - MCU page / meeting_mcu_scoketio.html ... handleMessage()
 //   DONE - member page /index.html (ws) ... handleMessage()
@@ -58,7 +59,7 @@
 // --- MCU core tasks --
 //  DONE - clean up, when member reloded (server)
 //  - modify init() with args
-//  - setup pc_config (STUN, TURN)
+
 //  - change canvas size, remote video size, remote video visible/hidden
 //  - change bandwidth
 //  - support multiple video for same peer 
